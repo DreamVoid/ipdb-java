@@ -1,22 +1,25 @@
 package net.ipip.ipdb;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
+import java.io.InputStream;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class IDCTest {
 
     @Test
-    public void testIDC() {
-        try {
-            IDC db = new IDC("c:/work/ipdb/idc_list.ipdb");
-            System.out.println(db.buildTime());
-            System.out.println(db.languages());
-            System.out.println(db.fields());
-            System.out.println(db.isIPv4());
-            System.out.println(db.isIPv6());
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
+    public void testIDC() throws Exception {
+        // 通用 Reader 能力验证：idc_list.ipdb 不在测试资源中，
+        // 使用 database.ipdb 验证 IDC 包装类的加载与元数据接口。
+        InputStream in = TestDb.open();
+        IDC db = new IDC(in);
+
+        assertTrue(db.buildTime() > 0, "build time should be positive");
+        assertTrue(db.isIPv4(), "dataset supports ipv4");
+        assertTrue(db.isIPv6(), "dataset supports ipv6");
+        assertNotNull(db.fields(), "fields should not be null");
+        assertTrue(db.languages().contains("CN"), "languages should contain CN");
     }
 }

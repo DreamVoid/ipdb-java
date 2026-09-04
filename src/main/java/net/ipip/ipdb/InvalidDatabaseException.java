@@ -9,4 +9,12 @@ public class InvalidDatabaseException extends IOException {
     public InvalidDatabaseException(String message) {
         super(message);
     }
+
+    public InvalidDatabaseException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public InvalidDatabaseException(Throwable cause) {
+        super(cause);
+    }
 }

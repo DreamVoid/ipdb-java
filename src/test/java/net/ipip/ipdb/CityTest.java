@@ -1,66 +1,55 @@
 package net.ipip.ipdb;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.io.InputStream;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CityTest {
 
     private static City cityDb;
 
-    static {
-        try {
-            cityDb = new City("c:/tiantexin/download/mydata4full.ipdb");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    @BeforeAll
+    public static void setUp() throws Exception {
+        InputStream in = TestDb.open();
+        cityDb = new City(in);
     }
 
     @Test
-    public void findAsnInfo() {
-        try {
-            CityInfo cityInfo = cityDb.findCity("27.190.250.125", "CN");
-            System.out.println(cityInfo);
-            System.out.println(cityInfo.getDistrictInfo());
-            System.out.println("\n");
-            System.out.println(cityInfo.getRoute());
-            System.out.println("\n");
-            System.out.println(cityInfo.getUsageType());
-            AsnInfo[] infos = cityInfo.getAsnInfos();
-            if (infos != null) {
-                for (int i = 0; i < infos.length; i++) {
-                    AsnInfo info = infos[i];
-                    System.out.println(info.ASN);
-                    System.out.println(info.Registry);
-                    System.out.println(info.Country);
-                    System.out.println(info.NetName);
-                    System.out.println(info.OrgName);
-                }
-                System.out.println(infos.length);
-            }
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    public void find() throws Exception {
+        City.Info info = cityDb.findCity("114.114.114.114", "CN");
+        assertNotNull(info, "known ipv4 should be found");
+        assertNotNull(info.getCountryName(), "country_name should not be null");
+        assertFalse(info.getCountryName().isEmpty(), "country_name should not be empty");
+        assertNotNull(info.toString());
     }
 
     @Test
-    public void find() {
+    public void findMap() throws Exception {
+        Map<String, String> data = cityDb.findMap("114.114.114.114", "CN");
+        assertNotNull(data, "findMap should return a map for known ipv4");
+        assertTrue(data.containsKey("country_name"), "map should contain field country_name");
+        assertTrue(data.containsKey("isp_domain"), "map should contain field isp_domain");
 
-        try {
-            CityInfo cityInfo = cityDb.findCity("111.199.81.160", "CN");
-            System.out.println(cityInfo.getDistrictInfo());
-            System.out.println("\n");
-            System.out.println(cityInfo.toString());
+        // database.ipdb 数据集不包含 asn_info / district_info 字段
+        City.Info info = cityDb.findInfo("114.114.114.114", "CN");
+        assertNotNull(info);
+        assertNull(info.getAsnInfos(), "asn_info is not present in this dataset");
+        assertNull(info.getDistrictInfo(), "district_info is not present in this dataset");
+    }
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    @Test
+    public void metadata() {
+        assertTrue(cityDb.buildTime() > 0, "build time should be positive");
+        assertTrue(cityDb.isIPv4(), "dataset supports ipv4");
+        assertTrue(cityDb.isIPv6(), "dataset supports ipv6");
+        assertTrue(cityDb.fields().contains("country_name"), "fields should contain country_name");
+        assertTrue(cityDb.languages().contains("CN"), "languages should contain CN");
     }
 }

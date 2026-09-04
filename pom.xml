@@ -1,42 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <name>ipdb-sdk</name>
-    <description>IPIP.net Support ipdb database file parser SDK</description>
-    <url>https://github.com/ipipdotnet/ipdb-java</url>
-    <groupId>net.ipip</groupId>
+
+    <name>IPDB Reader</name>
+    <description>Reader for IPIP.net ipdb</description>
+    <url>https://github.com/DreamVoid/ipdb-java</url>
+
+    <groupId>io.github.dreamvoid</groupId>
     <artifactId>ipdb</artifactId>
-    <version>1.5.0</version>
+    <version>2.0</version>
+
     <packaging>jar</packaging>
+
     <developers>
         <developer>
             <id>frk</id>
             <name>ipip.net</name>
             <email>frk@ipip.net</email>
         </developer>
+        <developer>
+            <name>DreamVoid</name>
+            <email>i@dreamvoid.me</email>
+            <url>https://github.com/DreamVoid</url>
+        </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/ipipdotnet/ipdb-java.git</connection>
-        <developerConnection>scm:git:https://github.com/ipipdotnet/ipdb-java.git</developerConnection>
-        <url>https://github.com/ipipdotnet/ipdb-java</url>
+        <connection>scm:git:https://github.com/DreamVoid/ipdb-java.git</connection>
+        <developerConnection>scm:git:https://github.com/DreamVoid/ipdb-java.git</developerConnection>
+        <url>https://github.com/DreamVoid/ipdb-java</url>
     </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>8</release>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -50,7 +65,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.1.2</version>
+                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -64,13 +79,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>3.8.0</version>
                 <configuration>
-                    <aggregate>true</aggregate>
                     <charset>UTF-8</charset>
                     <encoding>UTF-8</encoding>
                     <docencoding>UTF-8</docencoding>
-                    <additionalparam>-Xdoclint:none</additionalparam>
+                    <doclint>none</doclint>
                 </configuration>
                 <executions>
                     <execution>
@@ -85,66 +99,46 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18</version>
-                <configuration>
-                    <forkCount>0</forkCount>
-                </configuration>
+                <version>3.5.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.4.1</version>
+                <version>3.1.1</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-scm-plugin</artifactId>
-                <version>1.8.1</version>
-            </plugin>
-
-            <!--<plugin>-->
-                <!--<artifactId>maven-deploy-plugin</artifactId>-->
-                <!--<version>2.8.2</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>default-deploy</id>-->
-                        <!--<phase>deploy</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>deploy</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
-
-            <!--<plugin>-->
-                <!--<groupId>org.sonatype.plugins</groupId>-->
-                <!--<artifactId>nexus-staging-maven-plugin</artifactId>-->
-                <!--<version>1.6.7</version>-->
-                <!--<extensions>true</extensions>-->
-                <!--<configuration>-->
-                    <!--<serverId>ossrh</serverId>-->
-                    <!--<nexusUrl>https://oss.sonatype.org/</nexusUrl>-->
-                    <!--<autoReleaseAfterClose>true</autoReleaseAfterClose>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <version>2.1.0</version>
             </plugin>
 
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <distributionManagement>
         <repository>
@@ -159,22 +153,21 @@
 
     </distributionManagement>
 
-         <!--添加依赖的jar包-->
-         <dependencies>
-             <!--项目要使用到junit的jar包，所以在这里添加junit的jar包的依赖-->
-             <dependency>
-                 <groupId>junit</groupId>
-                 <artifactId>junit</artifactId>
-                 <version>4.9</version>
-                 <scope>test</scope>
-             </dependency>
+    <!--添加依赖的jar包-->
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.4</version>
+            <scope>test</scope>
+        </dependency>
 
-             <dependency>
-                 <groupId>com.alibaba</groupId>
-                 <artifactId>fastjson</artifactId>
-                 <version>1.2.83</version>
-             </dependency>
-         </dependencies>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+    </dependencies>
 
     <licenses>
         <license>

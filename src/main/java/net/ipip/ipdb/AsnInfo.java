@@ -1,20 +1,20 @@
 package net.ipip.ipdb;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.google.gson.annotations.SerializedName;
 
 public class AsnInfo {
-
+    @SerializedName("asn")
     public int ASN;
 
-    @JSONField(name = "reg")
+    @SerializedName("reg")
     public String Registry;
 
-    @JSONField(name = "cc")
+    @SerializedName("cc")
     public String Country;
 
-    @JSONField(name = "net")
+    @SerializedName("net")
     public String NetName;
 
-    @JSONField(name = "org")
+    @SerializedName("org")
     public String OrgName;
 }

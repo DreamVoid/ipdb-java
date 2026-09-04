@@ -1,14 +1,14 @@
 package net.ipip.ipdb;
 
-import com.alibaba.fastjson.JSONObject;
-import sun.net.util.IPAddressUtil;
+import com.google.gson.Gson;
+import me.dreamvoid.ipdb.AddressNotFoundException;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 
 public class Reader {
-
     private int fileSize;
     private int nodeCount;
 
@@ -17,12 +17,22 @@ public class Reader {
 
     private int v4offset;
 
-    public Reader(String name) throws IOException, InvalidDatabaseException {
-        this(new FileInputStream(new File(name)));
+    public Reader(String name) throws IOException {
+        this(new File(name));
     }
 
-    public Reader(InputStream in) throws IOException, InvalidDatabaseException {
-        this.init(this.readAllAsStream(in));
+    private Reader(File file) throws IOException {
+        try (FileInputStream in = new FileInputStream(file)) {
+            this.init(this.readAllAsStream(in));
+        }
+    }
+
+    public Reader(InputStream in) throws IOException {
+        try {
+            this.init(this.readAllAsStream(in));
+        } finally {
+            in.close();
+        }
     }
 
     protected byte[] readAllAsStream(InputStream in) throws IOException {
@@ -32,12 +42,10 @@ public class Reader {
         while ((n = in.read(buffer)) != -1) {
             out.write(buffer, 0, n);
         }
-        in.close();
         return out.toByteArray();
     }
 
     protected void init(byte[] data) throws InvalidDatabaseException {
-
         this.data = data;
         this.fileSize = data.length;
         if (this.fileSize < 5) {
@@ -52,25 +60,27 @@ public class Reader {
         );
 
         try {
-            int end = Long.valueOf(metaLength).intValue() + 4;
+            int end = (int) metaLength + 4;
             byte[] metaBytes = Arrays.copyOfRange(this.data, 4, end);
 
-            MetaData meta = JSONObject.parseObject(new String(metaBytes), MetaData.class);
+            MetaData meta = new Gson().fromJson(new String(metaBytes, StandardCharsets.UTF_8), MetaData.class);
+            if (meta == null || meta.nodeCount < 0 || meta.Languages == null || meta.Fields == null) {
+                throw new InvalidDatabaseException("database meta error");
+            }
             this.nodeCount = meta.nodeCount;
             this.meta = meta;
         } catch (Exception e) {
-            throw new InvalidDatabaseException(e.getMessage());
+            throw new InvalidDatabaseException(e);
         }
 
-        if ((meta.totalSize + Long.valueOf(metaLength).intValue() + 4) != this.data.length) {
+        if ((meta.totalSize + (int) metaLength + 4) != this.data.length) {
             throw new InvalidDatabaseException("database file size error");
         }
 
-        this.data = Arrays.copyOfRange(this.data, Long.valueOf(metaLength).intValue() + 4, this.fileSize);
+        this.data = Arrays.copyOfRange(this.data, (int) metaLength + 4, this.fileSize);
 
-        /** for ipv4 */
-        if (0x01 == (this.meta.IPVersion & 0x01))
-        {
+        /* for ipv4 */
+        if (0x01 == (this.meta.IPVersion & 0x01)) {
             int node = 0;
             for (int i = 0; i < 96 && node < this.nodeCount; i++) {
                 if (i >= 80) {
@@ -86,49 +96,45 @@ public class Reader {
 
     public String[] find(String addr, String language) throws IPFormatException, InvalidDatabaseException {
 
-        int off;
-        try {
-            off = this.meta.Languages.get(language);
-        } catch (NullPointerException e) {
+        Integer lang = this.meta.Languages.get(language);
+        if (lang == null) {
             return null;
         }
+        int off = lang;
 
         byte[] ipv;
 
-        if (addr.indexOf(":") >= 0) {
-            ipv = IPAddressUtil.textToNumericFormatV6(addr);
+        if (addr.contains(":")) {
+            ipv = IPFormat.textToNumericFormatV6(addr);
             if (ipv == null) {
                 throw new IPFormatException("ipv6 format error");
             }
-            if ((this.meta.IPVersion & 0x02) != 0x02){
+            if ((this.meta.IPVersion & 0x02) != 0x02) {
                 throw new IPFormatException("no support ipv6");
             }
 
         } else if (addr.indexOf(".") > 0) {
-            ipv = IPAddressUtil.textToNumericFormatV4(addr);
+            ipv = IPFormat.textToNumericFormatV4(addr);
             if (ipv == null) {
                 throw new IPFormatException("ipv4 format error");
             }
-            if ((this.meta.IPVersion & 0x01) != 0x01){
+            if ((this.meta.IPVersion & 0x01) != 0x01) {
                 throw new IPFormatException("no support ipv4");
             }
         } else {
             throw new IPFormatException("ip format error");
         }
 
-        int node = 0;
         try {
-            node = this.findNode(ipv);
-        } catch (NotFoundException nfe) {
+            int node = this.findNode(ipv);
+            final String data = this.resolve(node);
+            return Arrays.copyOfRange(data.split("\t", this.meta.Fields.length * this.meta.Languages.size()), off, off + this.meta.Fields.length);
+        } catch (AddressNotFoundException nfe) {
             return null;
         }
-
-        final String data = this.resolve(node);
-
-        return Arrays.copyOfRange(data.split("\t", this.meta.Fields.length * this.meta.Languages.size()), off, off+this.meta.Fields.length);
     }
-    
-    private int findNode(byte[] binary) throws NotFoundException {
+
+    private int findNode(byte[] binary) throws AddressNotFoundException {
 
         int node = 0;
 
@@ -150,43 +156,39 @@ public class Reader {
             return node;
         }
 
-        throw new NotFoundException("ip not found");
+        throw new AddressNotFoundException("ip not found");
     }
 
     private String resolve(int node) throws InvalidDatabaseException {
-        final int resoloved = node - this.nodeCount + this.nodeCount * 8;
-        if (resoloved >= this.fileSize) {
+        final int resolved = node - this.nodeCount + this.nodeCount * 8;
+        if (resolved >= this.fileSize) {
             throw new InvalidDatabaseException("database resolve error");
         }
 
         byte b = 0;
-        int size = Long.valueOf(bytesToLong(
+        int size = (int) bytesToLong(
                 b,
                 b,
-                this.data[resoloved],
-                this.data[resoloved+1]
-        )).intValue();
+                this.data[resolved],
+                this.data[resolved + 1]
+        );
 
-        if (this.data.length < (resoloved + 2 + size)) {
+        if (this.data.length < (resolved + 2 + size)) {
             throw new InvalidDatabaseException("database resolve error");
         }
 
-        try {
-            return new String(this.data, resoloved + 2, size, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new InvalidDatabaseException("database resolve error");
-        }
+        return new String(this.data, resolved + 2, size, StandardCharsets.UTF_8);
     }
 
     private int readNode(int node, int index) {
         int off = node * 8 + index * 4;
 
-        return Long.valueOf(bytesToLong(
+        return (int) bytesToLong(
                 this.data[off],
-                this.data[off+1],
-                this.data[off+2],
-                this.data[off+3]
-        )).intValue();
+                this.data[off + 1],
+                this.data[off + 2],
+                this.data[off + 3]
+        );
     }
 
     private static long bytesToLong(byte a, byte b, byte c, byte d) {
@@ -214,7 +216,7 @@ public class Reader {
     }
 
     public String[] getSupportFields() {
-        return this.meta.Fields;
+        return Arrays.copyOf(this.meta.Fields, this.meta.Fields.length);
     }
 
     public String getSupportLanguages() {

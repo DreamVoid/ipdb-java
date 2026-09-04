@@ -1,30 +1,28 @@
 package net.ipip.ipdb;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
+import java.io.InputStream;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DistrictTest {
 
     @Test
-    public void testDistrict() {
+    public void testDistrict() throws Exception {
+        // 通用 Reader 能力验证：database.ipdb 为城市库，可加载并解析行数据；
+        // 专门的 china_district.ipdb 不在测试资源中，故不断言行政区专有字段。
+        InputStream in = TestDb.open();
+        District db = new District(in);
 
-        try {
-            District db = new District("d:/work/ipdb/china_district.ipdb");
-            System.out.println(db.buildTime());
-            System.out.println(db.languages());
-            System.out.println(db.fields());
-            System.out.println(db.isIPv4());
-            System.out.println(db.isIPv6());
-            DistrictInfo info = db.findInfo("123.121.1.69", "CN");
-            System.out.println(info.getRegionName());
-            System.out.println(info.getCityName());
-            System.out.println(info.getDistrictName());
-            System.out.println(info.getLatitude());
-            System.out.println(info.getLongitude());
-        } catch (Exception ioe) {
-            ioe.printStackTrace();
-        }
+        assertTrue(db.buildTime() > 0, "build time should be positive");
+        assertTrue(db.isIPv4(), "dataset supports ipv4");
+        assertTrue(db.fields().contains("country_name"), "fields should contain country_name");
+        assertTrue(db.languages().contains("CN"), "languages should contain CN");
 
+        District.Info info = db.findInfo("114.114.114.114", "CN");
+        assertNotNull(info, "city database rows are still resolvable as DistrictInfo");
+        assertNotNull(info.getCountryName(), "country_name should be resolvable");
     }
 }

@@ -7,29 +7,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Risk {
-
-    /**
-     * @var Reader
-     */
     private Reader reader;
 
-    public Risk(String name) throws IOException,InvalidDatabaseException {
+    public Risk(String name) throws IOException {
         this.reader = new Reader(name);
     }
 
-    public Risk(InputStream in) throws IOException, InvalidDatabaseException {
+    public Risk(InputStream in) throws IOException {
         this.reader = new Reader(in);
     }
 
     public boolean reload(String name) {
         try {
-            Reader r = new Reader(name);
-            this.reader = r;
+            this.reader = new Reader(name);
+            return true;
         } catch (Exception e) {
             return false;
         }
-
-        return true;
     }
 
     public Map<String, String> findMap(String addr, String language) throws IPFormatException, InvalidDatabaseException {
@@ -38,7 +32,7 @@ public class Risk {
             return null;
         }
 
-        Map<String, String> m = new HashMap<String, String>();
+        Map<String, String> m = new HashMap<>();
 
         String[] fields = this.reader.getSupportFields();
 
@@ -49,17 +43,36 @@ public class Risk {
         return m;
     }
 
-    public RiskInfo findInfo(String addr) throws IPFormatException, InvalidDatabaseException {
-
+    public Info findInfo(String addr) throws IPFormatException, InvalidDatabaseException {
         Map<String, String> data = this.findMap(addr, "CN");
-        if (data == null) {
-            return null;
-        }
+        return data != null ? new Info(data) : null;
 
-        return new RiskInfo(data);
     }
 
     public String fields() {
         return Arrays.toString(this.reader.getSupportFields());
+    }
+
+    public static class Info {
+        private final Map<String, String> data;
+
+        public Info(Map<String, String> map) {
+            this.data = map;
+        }
+
+        public int getScore() {
+            String s = this.data.get("score");
+            return s != null ? Integer.parseInt(s) : 0;
+        }
+
+        public String getBehavior() {
+            String s = this.data.get("behavior");
+            return s != null ? s : "";
+        }
+
+        public String getCountryCode() {
+            String s = this.data.get("country_code");
+            return s != null ? s : "";
+        }
     }
 }
